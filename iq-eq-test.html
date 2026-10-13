@@ -1,0 +1,451 @@
+<title>Trắc nghiệm IQ – EQ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Lora:wght@500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Bố cục: một cột hẹp như phiếu trắc nghiệm; thanh tiến độ cố định phía trên khi làm bài. */
+:root {
+  --bg: #f4f6f8;
+  --surface: #ffffff;
+  --fg: #16202c;
+  --muted: #5a6775;
+  --line: #d9dfe6;
+  --iq: #2350a0;
+  --iq-soft: #e4ebf7;
+  --eq: #b55a26;
+  --eq-soft: #f6e8de;
+  --ok: #2c7a4b;
+  --warn: #b3261e;
+  --warn-soft: #fbe6e4;
+  --font-display: "Lora", Georgia, "Times New Roman", serif;
+  --font-body: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10161d; --surface: #18212b; --fg: #e6ebf0; --muted: #9aa7b4; --line: #2c3946;
+    --iq: #8fb0ef; --iq-soft: #1e2d47; --eq: #e59a6b; --eq-soft: #3a2619;
+    --ok: #6fc794; --warn: #f2938b; --warn-soft: #3d1f1d; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10161d; --surface: #18212b; --fg: #e6ebf0; --muted: #9aa7b4; --line: #2c3946;
+  --iq: #8fb0ef; --iq-soft: #1e2d47; --eq: #e59a6b; --eq-soft: #3a2619;
+  --ok: #6fc794; --warn: #f2938b; --warn-soft: #3d1f1d; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.55; padding-inline: 16px; padding-block: 0 48px; }
+.wrap { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; line-height: 1.25; }
+h1 { font-size: 2rem; }
+h2 { font-size: 1.4rem; }
+h3 { font-size: 1.1rem; }
+p { margin: 0; }
+.muted { color: var(--muted); }
+.eyebrow { font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+header.top { padding-block: 32px 0; display: flex; flex-direction: column; gap: 8px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.card.iq { border-top: 4px solid var(--iq); }
+.card.eq { border-top: 4px solid var(--eq); }
+.facts { display: flex; flex-wrap: wrap; gap: 8px; font-family: var(--font-mono); font-size: .8rem; }
+.facts span { border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; color: var(--muted); }
+button { font: inherit; cursor: pointer; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); padding: 10px 16px; }
+button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid var(--iq); outline-offset: 2px; }
+button.primary { background: var(--iq); border-color: var(--iq); color: var(--surface); font-weight: 600; }
+button.primary.eqc { background: var(--eq); border-color: var(--eq); }
+button:disabled { opacity: .45; cursor: not-allowed; }
+.note { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; font-size: .92rem; }
+.note ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.field { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+select { font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); }
+label.check { display: flex; gap: 10px; align-items: flex-start; }
+label.check input { margin-top: 4px; width: 18px; height: 18px; flex: none; }
+
+/* Màn hình làm bài */
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 2; background: var(--bg); padding-block: 12px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid var(--line); }
+.bar-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.timer { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 1rem; padding: 2px 10px; border-radius: 6px; background: var(--iq-soft); color: var(--iq); }
+.timer.low { background: var(--warn-soft); color: var(--warn); }
+.progress { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.progress > i { display: block; height: 100%; background: var(--accent, var(--iq)); width: 0; transition: width .2s; }
+.qcard { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.qnum { font-family: var(--font-mono); font-size: .8rem; color: var(--muted); }
+.qtext { font-size: 1.08rem; font-weight: 500; }
+.series { font-family: var(--font-mono); font-size: 1.3rem; letter-spacing: .02em; overflow-wrap: anywhere; }
+.matrix { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; max-width: 330px; width: 100%; margin: 0 auto; }
+.cell { aspect-ratio: 1; max-width: 100%; border: 1px solid var(--line); border-radius: 6px; display: grid; place-items: center; color: var(--fg); background: var(--bg); }
+.cell svg { width: 88%; height: 88%; }
+.cell.q { font-family: var(--font-display); font-size: 2rem; color: var(--muted); border-style: dashed; }
+.opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.opts.fig { grid-template-columns: repeat(3, 1fr); }
+.opt { text-align: left; display: flex; gap: 10px; align-items: center; min-width: 0; }
+.opt .k { font-family: var(--font-mono); font-size: .8rem; color: var(--muted); flex: none; }
+.opt.fig { flex-direction: column; padding: 8px; }
+.opt.fig svg { width: 100%; max-width: 96px; aspect-ratio: 1; color: var(--fg); }
+.opt[aria-pressed="true"] { border-color: var(--accent, var(--iq)); background: var(--accent-soft, var(--iq-soft)); box-shadow: inset 0 0 0 1px var(--accent, var(--iq)); }
+.likert { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.likert .opt { flex-direction: column; text-align: center; font-size: .8rem; padding: 10px 4px; gap: 4px; }
+.likert .opt b { font-family: var(--font-mono); font-size: 1.1rem; }
+.nav { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.dots { display: flex; flex-wrap: wrap; gap: 4px; }
+.dots button { width: 26px; height: 26px; padding: 0; font-family: var(--font-mono); font-size: .68rem; border-radius: 4px; }
+.dots button.done { background: var(--accent-soft, var(--iq-soft)); border-color: var(--accent, var(--iq)); }
+.dots button.cur { outline: 2px solid var(--accent, var(--iq)); outline-offset: 1px; }
+.confirm { border: 1px solid var(--warn); background: var(--warn-soft); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+
+/* Kết quả */
+.score { display: flex; flex-wrap: wrap; gap: 24px; align-items: baseline; }
+.big { font-family: var(--font-display); font-size: 2.6rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.missing { color: var(--warn); font-weight: 600; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; }
+td.n { font-family: var(--font-mono); white-space: nowrap; }
+.tablewrap { overflow-x: auto; }
+.meter { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; min-width: 80px; }
+.meter > i { display: block; height: 100%; background: var(--eq); }
+.pill { display: inline-block; font-size: .78rem; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+.save { font-size: .88rem; }
+@media (max-width: 480px) {
+  h1 { font-size: 1.6rem; }
+  .likert .opt span { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .progress > i { transition: none; } }
+</style>
+
+<div class="wrap" id="app"></div>
+
+<script>
+(() => {
+// ---------- Tiện ích ----------
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function shuffle(arr, seed) { const r = rng(seed), a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+const LETTERS = "ABCDEF";
+
+// ---------- Vẽ hình cho câu hỏi ma trận ----------
+const SIZE = [0.55, 0.78, 1];
+function shapeSvg(shape, x, y, s, fill, rot) {
+  const r = 13 * s, sw = 2.4;
+  const f = fill === 2 ? 'fill="currentColor"' : fill === 1 ? 'fill="currentColor" fill-opacity="0.35"' : 'fill="none"';
+  const common = `${f} stroke="currentColor" stroke-width="${sw}" stroke-linejoin="round"`;
+  const tr = `transform="translate(${x} ${y}) rotate(${rot})"`;
+  switch (shape) {
+    case "circle": return `<circle cx="${x}" cy="${y}" r="${r}" ${common}/>`;
+    case "square": return `<g ${tr}><rect x="${-r}" y="${-r}" width="${2 * r}" height="${2 * r}" ${common}/></g>`;
+    case "triangle": return `<g ${tr}><polygon points="0,${-r * 1.1} ${r * 1.05},${r * 0.75} ${-r * 1.05},${r * 0.75}" ${common}/></g>`;
+    case "diamond": return `<g ${tr}><polygon points="0,${-r * 1.2} ${r * 0.9},0 0,${r * 1.2} ${-r * 0.9},0" ${common}/></g>`;
+    case "hexagon": { const p = []; for (let i = 0; i < 6; i++) { const a = Math.PI / 3 * i; p.push(`${(r * 1.05 * Math.cos(a)).toFixed(2)},${(r * 1.05 * Math.sin(a)).toFixed(2)}`); } return `<g ${tr}><polygon points="${p.join(" ")}" ${common}/></g>`; }
+    case "arrow": return `<g ${tr}><polygon points="0,${-r * 1.4} ${r},${-r * 0.2} ${r * 0.38},${-r * 0.2} ${r * 0.38},${r * 1.3} ${-r * 0.38},${r * 1.3} ${-r * 0.38},${-r * 0.2} ${-r},${-r * 0.2}" ${common}/></g>`;
+  }
+  return "";
+}
+const POS = { 1: [[50, 50]], 2: [[30, 50], [70, 50]], 3: [[50, 27], [27, 70], [73, 70]], 4: [[30, 30], [70, 30], [30, 70], [70, 70]], 5: [[27, 27], [73, 27], [50, 50], [27, 73], [73, 73]] };
+function cellSvg(c) {
+  const count = c.count || 1, s = SIZE[c.size ?? 1] * (count > 2 ? 0.72 : count === 2 ? 0.85 : 1.25);
+  const body = POS[count].map(([x, y]) => shapeSvg(c.shape, x, y, s, c.fill ?? 2, c.rot || 0)).join("");
+  return `<svg viewBox="0 0 100 100" role="img" aria-hidden="true">${body}</svg>`;
+}
+const keyOf = c => [c.shape, c.count || 1, c.fill ?? 2, c.size ?? 1, c.rot || 0].join("|");
+const ROTS = [0, 45, 90, 135, 180, 225, 270, 315];
+
+// Mỗi câu ma trận: hàm sinh ô (hàng r, cột c) và các thuộc tính dùng để tạo phương án nhiễu.
+const MATRIX = [
+  { gen: (r, c) => ({ shape: ["circle", "square", "triangle"][r], count: c + 1 }), vary: { shape: ["circle", "square", "triangle"], count: [1, 2, 3, 4] } },
+  { gen: (r, c) => ({ shape: ["circle", "square", "diamond"][c], fill: r }), vary: { shape: ["circle", "square", "diamond", "triangle"], fill: [0, 1, 2] } },
+  { gen: (r, c) => ({ shape: "arrow", rot: (r * 90 + c * 45) % 360 }), vary: { rot: ROTS } },
+  { gen: (r, c) => ({ shape: "circle", count: r + c + 1 }), vary: { count: [1, 2, 3, 4, 5], size: [0, 2] } },
+  { gen: (r, c) => ({ shape: ["circle", "square", "triangle"][(r + c) % 3], fill: (2 * r + c) % 3 }), vary: { shape: ["circle", "square", "triangle"], fill: [0, 1, 2] } },
+  { gen: (r, c) => ({ shape: ["square", "hexagon", "triangle"][r], size: c }), vary: { shape: ["square", "hexagon", "triangle"], size: [0, 1, 2], fill: [0, 1] } },
+  { gen: (r, c) => ({ shape: ["diamond", "circle", "hexagon"][(r + c) % 3], count: c + 1, fill: r }), vary: { shape: ["diamond", "circle", "hexagon"], count: [1, 2, 3], fill: [0, 1, 2] } },
+  { gen: (r, c) => ({ shape: "arrow", rot: ((c - r + 4) % 4) * 90, fill: c }), vary: { rot: [0, 90, 180, 270], fill: [0, 1, 2] } },
+  { gen: (r, c) => ({ shape: ["triangle", "square", "circle"][(r + c) % 3], fill: (r + 2 * c) % 3, count: (2 * r + c) % 3 + 1 }), vary: { shape: ["triangle", "square", "circle"], fill: [0, 1, 2], count: [1, 2, 3] } },
+  { gen: (r, c) => ({ shape: "arrow", rot: (r + c) * 45, fill: c }), vary: { rot: ROTS, fill: [0, 1, 2] } },
+  { gen: (r, c) => ({ shape: ["hexagon", "diamond", "circle"][(r + 2 * c) % 3], size: (2 * r + c) % 3, fill: (r + c) % 3 }), vary: { shape: ["hexagon", "diamond", "circle"], size: [0, 1, 2], fill: [0, 1, 2] } },
+  { gen: (r, c) => ({ shape: ["circle", "triangle", "square"][(r + c) % 3], fill: (2 * r + c) % 3, count: (r + 2 * c) % 3 + 1, size: r }), vary: { shape: ["circle", "triangle", "square"], fill: [0, 1, 2], count: [1, 2, 3], size: [0, 1, 2] } }
+];
+function buildMatrixItem(spec, idx) {
+  const cells = []; for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) cells.push(spec.gen(r, c));
+  const answer = cells[8], ak = keyOf(answer), seen = new Set([ak]);
+  const singles = [], pairs = [], attrs = Object.keys(spec.vary);
+  for (const a of attrs) for (const v of spec.vary[a]) { const d = { ...answer, [a]: v }; const k = keyOf(d); if (!seen.has(k)) { seen.add(k); singles.push(d); } }
+  for (let i = 0; i < attrs.length; i++) for (let j = i + 1; j < attrs.length; j++) for (const v of spec.vary[attrs[i]]) for (const w of spec.vary[attrs[j]]) { const d = { ...answer, [attrs[i]]: v, [attrs[j]]: w }; const k = keyOf(d); if (!seen.has(k)) { seen.add(k); pairs.push(d); } }
+  const distract = shuffle(singles, idx * 97 + 11).concat(shuffle(pairs, idx * 31 + 7)).slice(0, 5);
+  const options = shuffle([answer, ...distract], idx * 13 + 5);
+  return { type: "matrix", section: "Suy luận hình", text: "Chọn hình phù hợp điền vào ô có dấu hỏi.", cells: cells.slice(0, 8), options, answer: options.findIndex(o => keyOf(o) === ak) };
+}
+
+const SERIES = [
+  { s: "2, 4, 8, 16, ?", o: ["24", "30", "32", "36"], a: "32" },
+  { s: "3, 7, 11, 15, ?", o: ["17", "19", "20", "21"], a: "19" },
+  { s: "1, 4, 9, 16, 25, ?", o: ["30", "34", "36", "49"], a: "36" },
+  { s: "2, 3, 5, 8, 13, ?", o: ["18", "20", "21", "26"], a: "21" },
+  { s: "81, 27, 9, 3, ?", o: ["0", "1", "1,5", "2"], a: "1" },
+  { s: "1, 2, 6, 24, 120, ?", o: ["240", "600", "720", "840"], a: "720" },
+  { s: "2, 5, 11, 23, 47, ?", o: ["71", "94", "95", "96"], a: "95" },
+  { s: "1, 10, 3, 9, 5, 8, 7, ?", o: ["6", "7", "9", "10"], a: "7" },
+  { s: "2, 6, 12, 20, 30, ?", o: ["38", "40", "42", "44"], a: "42" }
+].map(x => ({ type: "series", section: "Dãy số", text: "Tìm số tiếp theo của dãy.", series: x.s, options: x.o, answer: x.o.indexOf(x.a) }));
+
+const VERBAL = [
+  { t: "Bác sĩ : Bệnh viện  như  Giáo viên : ?", o: ["Học sinh", "Trường học", "Sách giáo khoa", "Bảng đen"], a: "Trường học" },
+  { t: "Từ nào khác loại với các từ còn lại?", o: ["Táo", "Cam", "Cà rốt", "Nho", "Chuối"], a: "Cà rốt" },
+  { t: "Mọi A đều là B. Mọi B đều là C. Kết luận nào chắc chắn đúng?", o: ["Mọi C đều là A", "Mọi A đều là C", "Một số C không là B", "Không kết luận được"], a: "Mọi A đều là C" },
+  { t: "Nếu hôm nay là thứ Tư thì 10 ngày sau là thứ mấy?", o: ["Thứ Sáu", "Thứ Bảy", "Chủ nhật", "Thứ Hai"], a: "Thứ Bảy" },
+  { t: "Từ nào trái nghĩa với “khan hiếm”?", o: ["Khó khăn", "Dồi dào", "Hiếm hoi", "Đắt đỏ"], a: "Dồi dào" },
+  { t: "An cao hơn Bình. Chi thấp hơn Bình. Dũng cao hơn An. Ai thấp nhất?", o: ["An", "Bình", "Chi", "Dũng"], a: "Chi" },
+  { t: "Một chiếc áo sau khi giảm giá 20% còn 240.000 đồng. Giá gốc của áo là bao nhiêu?", o: ["260.000 đồng", "280.000 đồng", "288.000 đồng", "300.000 đồng"], a: "300.000 đồng" },
+  { t: "Đồng hồ chỉ 3 giờ 15 phút. Góc nhỏ giữa kim giờ và kim phút là bao nhiêu độ?", o: ["0°", "7,5°", "15°", "30°"], a: "7,5°" },
+  { t: "Trong một hàng, Minh đứng thứ 7 tính từ bên trái và thứ 12 tính từ bên phải. Hàng có bao nhiêu người?", o: ["17", "18", "19", "20"], a: "18" }
+].map(x => ({ type: "verbal", section: "Ngôn ngữ – logic", text: x.t, options: x.o, answer: x.o.indexOf(x.a) }));
+
+const MAT_ITEMS = MATRIX.map(buildMatrixItem);
+// Xen kẽ ba phần, độ khó tăng dần trong từng phần.
+const IQ_ITEMS = [];
+for (let i = 0; i < 12; i++) { IQ_ITEMS.push(MAT_ITEMS[i]); if (i < 9) { IQ_ITEMS.push(SERIES[i]); IQ_ITEMS.push(VERBAL[i]); } }
+const IQ_SECONDS = 20 * 60;
+
+// ---------- Bộ câu hỏi EQ: 5 thành phần theo mô hình Goleman, 6 câu/thành phần, (R) = câu chấm điểm ngược ----------
+const EQ_DOMAINS = ["Tự nhận thức", "Tự điều chỉnh", "Động lực", "Đồng cảm", "Kỹ năng xã hội"];
+const EQ_RAW = [
+  ["Tôi nhận ra ngay khi tâm trạng của mình thay đổi.", "Tôi hiểu vì sao mình có cảm xúc như vậy trong từng tình huống.", "Tôi biết rõ điểm mạnh và điểm yếu của bản thân.", "Tôi thường bất ngờ trước phản ứng cảm xúc của chính mình.|R", "Tôi nhận biết được cảm xúc đang ảnh hưởng thế nào đến quyết định của mình.", "Khi được góp ý, tôi có thể nhìn nhận bản thân một cách khách quan."],
+  ["Tôi giữ được bình tĩnh khi chịu áp lực.", "Khi tức giận, tôi thường nói những điều sau đó phải hối tiếc.|R", "Tôi có thể tạm gác cảm xúc tiêu cực để tập trung vào công việc.", "Tôi suy nghĩ kỹ trước khi hành động trong tình huống căng thẳng.", "Tôi dễ bị cuốn theo lo lắng về những việc chưa xảy ra.|R", "Tôi thích nghi được khi kế hoạch thay đổi đột ngột."],
+  ["Tôi đặt mục tiêu rõ ràng và theo đuổi đến cùng.", "Khi thất bại, tôi nhanh chóng tìm cách làm lại.", "Tôi làm việc chăm chỉ ngay cả khi không có ai theo dõi.", "Tôi dễ bỏ cuộc khi công việc kéo dài mà chưa thấy kết quả.|R", "Tôi thấy được ý nghĩa trong công việc mình đang làm.", "Tôi giữ được tinh thần lạc quan trong giai đoạn khó khăn."],
+  ["Tôi nhận ra người khác đang buồn dù họ không nói ra.", "Tôi lắng nghe trọn vẹn trước khi nêu ý kiến của mình.", "Tôi đặt mình vào vị trí người khác để hiểu quan điểm của họ.", "Tôi thấy khó hiểu vì sao người khác lại phản ứng mạnh như vậy.|R", "Tôi để ý đến cử chỉ và giọng nói của người đối diện.", "Tôi tôn trọng những người có quan điểm khác mình."],
+  ["Tôi dễ dàng bắt chuyện và xây dựng quan hệ với người mới.", "Tôi xử lý được bất đồng mà không làm tổn hại quan hệ.", "Tôi trình bày ý kiến rõ ràng và có sức thuyết phục.", "Tôi thường né tránh những cuộc trao đổi khó khăn.|R", "Tôi làm việc nhóm hiệu quả và biết phối hợp.", "Tôi có thể giúp người khác bình tĩnh lại khi họ căng thẳng."]
+];
+const EQ_ITEMS = [];
+for (let i = 0; i < 6; i++) for (let d = 0; d < 5; d++) { const [t, f] = EQ_RAW[d][i].split("|"); EQ_ITEMS.push({ type: "likert", domain: d, text: t, reverse: f === "R" }); }
+const LIKERT = ["Hoàn toàn không đúng", "Không đúng", "Phân vân", "Đúng", "Hoàn toàn đúng"];
+
+// ---------- Trạng thái ----------
+const AGE = ["", "Dưới 18", "18–24", "25–34", "35–44", "45–54", "55 trở lên"];
+let S = { view: "home", test: null, idx: 0, answers: [], start: 0, remaining: IQ_SECONDS, confirm: false, result: null, age: "", consent: false, saveMsg: "" };
+let timerId = null;
+
+function startTest(kind) {
+  S = { ...S, view: "test", test: kind, idx: 0, answers: new Array(kind === "iq" ? IQ_ITEMS.length : EQ_ITEMS.length).fill(null), start: Date.now(), remaining: IQ_SECONDS, confirm: false, result: null, saveMsg: "" };
+  if (kind === "iq") runTimer();
+  render(); window.scrollTo(0, 0);
+}
+function runTimer() {
+  clearInterval(timerId);
+  const end = Date.now() + S.remaining * 1000;
+  timerId = setInterval(() => {
+    S.remaining = Math.max(0, Math.round((end - Date.now()) / 1000));
+    const t = $("#timer"); if (t) { t.textContent = fmt(S.remaining); t.classList.toggle("low", S.remaining <= 120); }
+    if (S.remaining <= 0) finish();
+  }, 500);
+}
+const fmt = s => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+
+function finish() {
+  clearInterval(timerId);
+  const seconds = Math.round((Date.now() - S.start) / 1000);
+  if (S.test === "iq") {
+    const sec = {};
+    const correct = IQ_ITEMS.map((q, i) => { const ok = S.answers[i] === q.answer ? 1 : 0; sec[q.section] = sec[q.section] || { right: 0, total: 0 }; sec[q.section].right += ok; sec[q.section].total++; return ok; });
+    S.result = { kind: "iq", raw: correct.reduce((a, b) => a + b, 0), total: IQ_ITEMS.length, answered: S.answers.filter(a => a !== null).length, sections: sec, seconds: Math.min(seconds, IQ_SECONDS), items: correct };
+  } else {
+    const dom = EQ_DOMAINS.map(() => 0);
+    const scored = EQ_ITEMS.map((q, i) => { const v = S.answers[i]; const pts = q.reverse ? 6 - v : v; dom[q.domain] += pts; return pts; });
+    S.result = { kind: "eq", domains: dom, total: dom.reduce((a, b) => a + b, 0), seconds, items: S.answers.slice() };
+  }
+  S.view = "result"; S.confirm = false;
+  render(); window.scrollTo(0, 0);
+  if (S.consent) saveResult();
+}
+
+// ---------- Lưu ẩn danh ----------
+async function saveResult() {
+  S.saveMsg = "Đang gửi kết quả ẩn danh…"; renderSave();
+  try {
+    const db = await window.claude?.use?.("db");
+    const user = await window.claude?.use?.("user");
+    const id = user ? await user.id() : null;
+    if (!db || !id) { S.saveMsg = "Không gửi được: trang này chưa cho phép tài khoản của bạn ghi dữ liệu. Kết quả vẫn hiển thị bình thường."; renderSave(); return; }
+    const ref = db.doc("results/" + id);
+    let cur = {};
+    try { const snap = await ref.get(); if (snap.exists) cur = snap.data() || {}; } catch (e) {}
+    const r = S.result;
+    const payload = r.kind === "iq"
+      ? { raw: r.raw, total: r.total, answered: r.answered, seconds: r.seconds, items: r.items, sections: Object.fromEntries(Object.entries(r.sections).map(([k, v]) => [k, v.right])), at: Date.now(), version: 1 }
+      : { total: r.total, domains: r.domains, seconds: r.seconds, items: r.items, at: Date.now(), version: 1 };
+    await ref.set({ ...cur, [r.kind]: payload, ageBand: S.age || null, updatedAt: Date.now() });
+    S.saveMsg = "Đã gửi kết quả ẩn danh. Cảm ơn bạn đã đóng góp số liệu.";
+  } catch (e) {
+    S.saveMsg = "Không gửi được kết quả (" + (e && e.code ? e.code : "lỗi kết nối") + "). Kết quả vẫn hiển thị bình thường.";
+  }
+  renderSave();
+}
+function renderSave() { const el = $("#saveMsg"); if (el) el.textContent = S.saveMsg; }
+
+// ---------- Giao diện ----------
+function home() {
+  return `
+  <header class="top">
+    <span class="eyebrow">Trắc nghiệm tham khảo</span>
+    <h1>Trắc nghiệm IQ – EQ</h1>
+    <p class="muted">Hai bài độc lập. Bạn có thể làm một bài hoặc cả hai.</p>
+  </header>
+  <div class="cards">
+    <section class="card iq">
+      <h2>Trí tuệ logic (IQ)</h2>
+      <div class="facts"><span>30 câu</span><span>20 phút</span><span>3 phần</span></div>
+      <p>Suy luận hình ma trận, quy luật dãy số, ngôn ngữ và tư duy logic. Hết giờ, bài tự động nộp.</p>
+      <button class="primary" data-act="start-iq">Bắt đầu bài IQ</button>
+    </section>
+    <section class="card eq">
+      <h2>Trí tuệ cảm xúc (EQ)</h2>
+      <div class="facts"><span>30 câu</span><span>khoảng 8 phút</span><span>5 thành phần</span></div>
+      <p>Tự đánh giá theo năm thành phần: tự nhận thức, tự điều chỉnh, động lực, đồng cảm, kỹ năng xã hội.</p>
+      <button class="primary eqc" data-act="start-eq">Bắt đầu bài EQ</button>
+    </section>
+  </div>
+  <section class="note">
+    <h3>Trước khi làm bài</h3>
+    <div class="field">
+      <label for="age">Nhóm tuổi (không bắt buộc)</label>
+      <select id="age">${AGE.map(a => `<option value="${a}"${a === S.age ? " selected" : ""}>${a || "Không cung cấp"}</option>`).join("")}</select>
+    </div>
+    <label class="check"><input type="checkbox" id="consent"${S.consent ? " checked" : ""}>
+      <span>Tôi đồng ý gửi kết quả ẩn danh (điểm, đáp án từng câu, thời gian làm bài, nhóm tuổi) để phục vụ thống kê và chuẩn hóa thang điểm. Không thu thập họ tên, email.</span></label>
+  </section>
+  <section class="note">
+    <h3>Giới hạn của bài trắc nghiệm</h3>
+    <ul>
+      <li>Kết quả chỉ có giá trị tham khảo, không thay thế đánh giá tâm lý do chuyên gia thực hiện.</li>
+      <li>Bài IQ chưa được chuẩn hóa trên mẫu dân số Việt Nam, nên chưa quy đổi ra chỉ số IQ. Bài trả về điểm thô và tỷ lệ đúng theo từng phần.</li>
+      <li>Bài EQ là thang tự đánh giá; điểm phản ánh cách bạn nhìn nhận bản thân.</li>
+    </ul>
+  </section>`;
+}
+
+function testView() {
+  const isIQ = S.test === "iq", items = isIQ ? IQ_ITEMS : EQ_ITEMS, q = items[S.idx], n = items.length;
+  const done = S.answers.filter(a => a !== null).length;
+  let body = "";
+  if (q.type === "matrix") {
+    body = `<div class="matrix">${q.cells.map(c => `<div class="cell">${cellSvg(c)}</div>`).join("")}<div class="cell q">?</div></div>
+      <div class="opts fig">${q.options.map((o, i) => `<button class="opt fig" data-ans="${i}" aria-pressed="${S.answers[S.idx] === i}" aria-label="Phương án ${LETTERS[i]}"><span class="k">${LETTERS[i]}</span>${cellSvg(o)}</button>`).join("")}</div>`;
+  } else if (q.type === "likert") {
+    body = `<div class="likert">${LIKERT.map((l, i) => `<button class="opt" data-ans="${i + 1}" aria-pressed="${S.answers[S.idx] === i + 1}"><b>${i + 1}</b><span>${l}</span></button>`).join("")}</div>`;
+  } else {
+    body = (q.series ? `<div class="series">${esc(q.series)}</div>` : "") +
+      `<div class="opts">${q.options.map((o, i) => `<button class="opt" data-ans="${i}" aria-pressed="${S.answers[S.idx] === i}"><span class="k">${LETTERS[i]}</span><span>${esc(o)}</span></button>`).join("")}</div>`;
+  }
+  const missing = n - done;
+  return `<div class="wrap" style="gap:20px${isIQ ? "" : ";--accent: var(--eq); --accent-soft: var(--eq-soft)"}">
+    <div class="bar">
+      <div class="bar-row">
+        <strong>${isIQ ? "Bài IQ" : "Bài EQ"}</strong>
+        <span class="muted">Đã trả lời ${done}/${n}</span>
+        ${isIQ ? `<span class="timer${S.remaining <= 120 ? " low" : ""}" id="timer" aria-label="Thời gian còn lại">${fmt(S.remaining)}</span>` : ""}
+      </div>
+      <div class="progress"><i style="width:${(done / n * 100).toFixed(1)}%"></i></div>
+    </div>
+    <section class="qcard">
+      <span class="qnum">Câu ${S.idx + 1}/${n} · ${isIQ ? esc(q.section) : "Mức độ đúng với bạn"}</span>
+      <p class="qtext">${esc(q.text)}</p>
+      ${body}
+    </section>
+    <div class="nav">
+      <button data-act="prev"${S.idx === 0 ? " disabled" : ""}>Câu trước</button>
+      ${S.idx < n - 1 ? `<button class="primary${isIQ ? "" : " eqc"}" data-act="next">Câu tiếp</button>` : `<button class="primary${isIQ ? "" : " eqc"}" data-act="submit">Nộp bài</button>`}
+    </div>
+    ${S.confirm ? `<div class="confirm" role="alert">
+      <p>Bạn còn <strong>${missing}</strong> câu chưa trả lời.${isIQ ? " Câu bỏ trống được tính là sai." : " Bài EQ cần trả lời đủ 30 câu để tính điểm."}</p>
+      <div class="nav">${isIQ ? `<button class="primary" data-act="force">Vẫn nộp bài</button>` : ""}<button data-act="first-missing">Đến câu chưa trả lời</button></div>
+    </div>` : ""}
+    <div class="dots" aria-label="Danh sách câu hỏi">${items.map((_, i) => `<button data-go="${i}" class="${S.answers[i] !== null ? "done" : ""}${i === S.idx ? " cur" : ""}" aria-label="Câu ${i + 1}">${i + 1}</button>`).join("")}</div>
+    <div><button data-act="quit">Thoát, không lưu bài</button></div>
+  </div>`;
+}
+
+function eqLevel(pct) { return pct >= 80 ? "Cao" : pct >= 60 ? "Khá" : pct >= 40 ? "Trung bình" : "Cần cải thiện"; }
+
+function resultView() {
+  const r = S.result;
+  const save = S.consent ? `<p class="save muted" id="saveMsg">${esc(S.saveMsg)}</p>` : `<p class="save muted">Bạn chọn không gửi kết quả. Không có dữ liệu nào rời khỏi trình duyệt.</p>`;
+  if (r.kind === "iq") {
+    const pct = Math.round(r.raw / r.total * 100);
+    return `<header class="top"><span class="eyebrow">Kết quả bài IQ</span><h1>Bạn trả lời đúng ${r.raw}/${r.total} câu</h1></header>
+    <section class="card iq">
+      <div class="score">
+        <div><div class="eyebrow">Điểm thô</div><div class="big">${r.raw}<span class="muted" style="font-size:1.2rem">/${r.total}</span></div></div>
+        <div><div class="eyebrow">Tỷ lệ đúng</div><div class="big">${pct}%</div></div>
+        <div><div class="eyebrow">Thời gian</div><div class="big">${fmt(r.seconds)}</div></div>
+      </div>
+      <p><span class="eyebrow">Chỉ số IQ quy đổi:</span> <span class="missing">Chưa có số liệu chuẩn hóa</span></p>
+      <p class="muted">Muốn quy đổi điểm thô ra chỉ số IQ (trung bình 100, độ lệch chuẩn 15) cần có phân phối điểm của một mẫu người làm bài đủ lớn. Thang quy đổi sẽ được bổ sung khi có số liệu.</p>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Phần</th><th>Đúng</th><th>Số câu</th></tr></thead>
+        <tbody>${Object.entries(r.sections).map(([k, v]) => `<tr><td>${esc(k)}</td><td class="n">${v.right}</td><td class="n">${v.total}</td></tr>`).join("")}</tbody>
+      </table></div>
+      <p class="muted">Bạn đã trả lời ${r.answered}/${r.total} câu.</p>
+    </section>
+    <section class="note"><h3>Đáp án đúng từng câu</h3><div class="dots">${r.items.map((ok, i) => `<span class="pill" style="color:${ok ? "var(--ok)" : "var(--warn)"}">${i + 1} ${ok ? "đúng" : "sai"}</span>`).join("")}</div></section>
+    ${save}
+    <div class="nav"><button data-act="home">Về trang đầu</button><button class="primary eqc" data-act="start-eq">Làm bài EQ</button></div>`;
+  }
+  const pct = Math.round((r.total - 30) / 120 * 100);
+  return `<header class="top"><span class="eyebrow">Kết quả bài EQ</span><h1>Tổng điểm ${r.total}/150</h1></header>
+  <section class="card eq">
+    <div class="score">
+      <div><div class="eyebrow">Tổng điểm</div><div class="big">${r.total}<span class="muted" style="font-size:1.2rem">/150</span></div></div>
+      <div><div class="eyebrow">Mức theo thang của bài</div><div class="big" style="font-size:1.8rem">${eqLevel(pct)}</div></div>
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Thành phần</th><th>Điểm</th><th style="width:40%">Mức</th></tr></thead>
+      <tbody>${r.domains.map((d, i) => { const p = Math.round((d - 6) / 24 * 100); return `<tr><td>${EQ_DOMAINS[i]}</td><td class="n">${d}/30</td><td><div class="meter"><i style="width:${p}%"></i></div><span class="muted" style="font-size:.82rem">${eqLevel(p)}</span></td></tr>`; }).join("")}</tbody>
+    </table></div>
+    <p class="muted">Mức được xác định theo vị trí điểm trên thang của bài (từ điểm thấp nhất đến cao nhất): dưới 40% là Cần cải thiện, 40–59% là Trung bình, 60–79% là Khá, từ 80% là Cao. Đây không phải so sánh với điểm của người khác.</p>
+  </section>
+  ${save}
+  <div class="nav"><button data-act="home">Về trang đầu</button><button class="primary" data-act="start-iq">Làm bài IQ</button></div>`;
+}
+
+function render() {
+  const app = $("#app");
+  if (S.view === "home") { app.className = "wrap"; app.innerHTML = home(); }
+  else if (S.view === "test") { app.className = ""; app.innerHTML = testView(); }
+  else { app.className = "wrap"; app.innerHTML = resultView(); }
+}
+
+document.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  const items = S.test === "iq" ? IQ_ITEMS : EQ_ITEMS;
+  if (b.dataset.ans !== undefined) {
+    S.answers[S.idx] = Number(b.dataset.ans); S.confirm = false;
+    if (S.test === "eq" && S.idx < items.length - 1) S.idx++;
+    render(); return;
+  }
+  if (b.dataset.go !== undefined) { S.idx = Number(b.dataset.go); render(); return; }
+  switch (b.dataset.act) {
+    case "start-iq": startTest("iq"); break;
+    case "start-eq": startTest("eq"); break;
+    case "prev": if (S.idx > 0) S.idx--; render(); break;
+    case "next": if (S.idx < items.length - 1) S.idx++; render(); break;
+    case "submit": if (S.answers.some(a => a === null)) { S.confirm = true; render(); } else finish(); break;
+    case "force": finish(); break;
+    case "first-missing": S.idx = S.answers.findIndex(a => a === null); S.confirm = false; render(); break;
+    case "quit": clearInterval(timerId); S.view = "home"; render(); break;
+    case "home": S.view = "home"; render(); window.scrollTo(0, 0); break;
+  }
+});
+document.addEventListener("change", e => {
+  if (e.target.id === "age") S.age = e.target.value;
+  if (e.target.id === "consent") S.consent = e.target.checked;
+});
+
+// Giữ trạng thái bài đang làm khi trang được cập nhật phiên bản mới.
+window.claude?.hot?.snapshot?.(() => ({ ...S }));
+function boot(data) {
+  if (data && data.view) { S = { ...S, ...data }; if (S.view === "test" && S.test === "iq") runTimer(); }
+  render();
+}
+window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? {});
+})();
+</script>
